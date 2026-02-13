@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>阿棋与阿豪</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: "PingFang SC", "Microsoft YaHei", sans-serif; }
+    body {
+      background: linear-gradient(135deg, #FFFAE8 0%, #FFF5D6 50%, #FFEDB8 100%);
+      min-height: 100vh;
+      overflow-x: hidden;
+      color: #333;
+      position: relative;
+    }
+    .heart-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
+    .container { max-width: 800px; margin: 0 auto; padding: 40px 20px; position: relative; z-index: 2; }
+    .header { text-align: center; margin-bottom: 30px; }
+    .title { font-size: 32px; color: #79afe0; font-weight: bold; margin-bottom: 8px; }
+    .subtitle { font-size: 14px; color: #666; }
+    .timer-card { background: #fffde7; border-radius: 16px; padding: 25px; text-align: center; margin-bottom: 30px; box-shadow: 0 8px 20px rgba(0,0,0,0.08); }
+    .timer-title { font-size: 18px; color: #000; margin-bottom: 12px; }
+    .timer { font-size: 26px; color: #79afe0; font-weight: bold; margin-bottom: 8px; }
+    .timer-start { font-size: 13px; color: #888; }
+    .avatar-row { display: flex; justify-content: center; align-items: center; gap: 20px; margin-bottom: 40px; }
+    .avatar { width: 80px; height: 80px; border-radius: 50%; background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center; font-size: 40px; overflow: hidden; }
+    .avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .heart-icon { color: #ff4081; font-size: 24px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; }
+    .card { background: #fffde7; border-radius: 16px; padding: 25px 15px; text-align: center; box-shadow: 0 6px 16px rgba(0,0,0,0.06); transition: 0.3s; border-top: 3px solid #f0e781; cursor: pointer; }
+    .card:hover { transform: translateY(-5px); box-shadow: 0 10px 24px rgba(0,0,0,0.1); }
+    .card-icon { font-size: 32px; color: #ba68c8; margin-bottom: 12px; }
+    .card-title { font-size: 16px; color: #333; font-weight: bold; margin-bottom: 8px; }
+    .card-desc { font-size: 12px; color: #777; }
+
+    /* 弹窗样式 */
+    #popup-overlay {
+      display: none;
+      position: fixed;
+      top:0; left:0; width:100%; height:100%;
+      background: rgba(0,0,0,0.4);
+      z-index: 999;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    #popup {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%) translateY(-100%);
+      background: #fffde7;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+      z-index: 1000;
+      max-width: 90%;
+      opacity: 0;
+      transition: all 0.4s ease;
+    }
+
+    #popup.show {
+      display: block;
+      opacity: 1;
+      transform: translateX(-50%) translateY(50px);
+    }
+
+    #popup-content {
+      max-height: 70vh;
+      overflow-y: auto;
+      padding-right: 5px;
+    }
+
+    #popup-close {
+      margin-top: 20px;
+      padding: 6px 12px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="heart-bg" id="hearts"></div>
+
+  <div class="container">
+    <div class="header">
+      <div class="title">阿棋与阿豪的一切</div>
+      <div class="subtitle">记录我们爱情的每一个瞬间</div>
+    </div>
+
+    <div class="timer-card">
+      <div class="timer-title">我们一起走过了</div>
+      <div class="timer" id="timer">0天 0小时 0分钟 0秒</div>
+      <div class="timer-start">从2024年1月27日开始</div>
+    </div>
+
+    <div class="avatar-row">
+      <div class="avatar"><img src="image/how.gif" alt="阿豪"></div>
+      <div class="heart-icon">❤️</div>
+      <div class="avatar"><img src="image/qi.gif" alt="阿棋"></div>
+    </div>
+
+    <div class="grid">
+      <div class="card" data-popup="<h3>我们的故事正式开始</h3> 
+	<img src='image/story1.jpg' alt='故事' style='width:100%;border-radius:8px;margin-top:10px;'> ">
+        <div class="card-icon">📖</div>
+        <div class="card-title">我们的故事</div>
+        <div class="card-desc">记录我们从相识到相爱的点点滴滴</div>
+      </div>
+      <div class="card" data-popup="<h3>甜蜜相册</h3><p>收藏我们每一张笑脸和幸福的瞬间。</p> 
+	<img src='image/story2.jpg' alt='故事' style='width:100%;border-radius:8px;margin-top:10px;'>">
+        <div class="card-icon">📷</div>
+        <div class="card-title">甜蜜相册</div>
+        <div class="card-desc">珍藏每一个美好瞬间</div>
+      </div>
+
+      <div class="card" data-popup="<h3>爱的情书</h3><p>写下想对彼此说的话，甜蜜而温暖。</p>
+	<img src='image/story3.jpg' alt='故事' style='width:100%;border-radius:8px;margin-top:10px;'>">
+        <div class="card-icon">💬</div>
+        <div class="card-title">爱的情书</div>
+        <div class="card-desc">写下想对彼此说的话</div>
+      </div>
+      <div class="card" data-popup="<h3>旅行地图</h3><p>标记我们一起走过的城市和风景，留下美好回忆。</p>
+	<img src='image/story4.jpg' alt='故事' style='width:100%;border-radius:8px;margin-top:10px;'>">
+        <div class="card-icon">📍</div>
+        <div class="card-title">旅行地图</div>
+        <div class="card-desc">一起走过的城市与风景</div>
+      </div>
+          </div>
+  </div>
+
+  <div id="popup-overlay"></div>
+  <div id="popup">
+    <div id="popup-content"></div>
+    <button id="popup-close">关闭</button>
+  </div>
+
+  <script>
+    // 计时器
+    function updateTimer() {
+      const start = new Date('2024-01-27 00:00:00');
+      const now = new Date();
+      const diff = now - start;
+      const days = Math.floor(diff / (1000*60*60*24));
+      const hours = Math.floor((diff % (1000*60*60*24)) / (1000*60*60));
+      const minutes = Math.floor((diff % (1000*60*60)) / (1000*60));
+      const seconds = Math.floor((diff % (1000*60))/1000);
+      document.getElementById('timer').innerText =
+        `${days}天 ${hours}小时 ${minutes}分钟 ${seconds}秒`;
+    }
+    updateTimer();
+    setInterval(updateTimer, 1000);
+
+    // 爱心飘落
+    function createHeart() {
+      let heart = document.createElement("div");
+      heart.innerHTML = "❤️";
+      heart.style.cssText = `
+        position: absolute;
+        font-size: ${Math.random()*12+8}px;
+        left: ${Math.random()*100}%;
+        top: -50px;
+        opacity: 0.6;
+        animation: fall ${Math.random()*4+5}s linear forwards;
+      `;
+      document.getElementById("hearts").appendChild(heart);
+      setTimeout(() => heart.remove(), 6000);
+    }
+    let style = document.createElement('style');
+    style.innerHTML = `@keyframes fall {
+      0% { transform: translateY(0) rotate(0deg); opacity: 0.6; }
+      100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+    }`;
+    document.head.appendChild(style);
+    setInterval(createHeart, 400);
+
+    // 弹窗逻辑
+    const cards = document.querySelectorAll('.card');
+    const popup = document.getElementById('popup');
+    const overlay = document.getElementById('popup-overlay');
+    const popupContent = document.getElementById('popup-content');
+    const popupClose = document.getElementById('popup-close');
+
+    cards.forEach(card => {
+      card.addEventListener('click', () => {
+        const content = card.getAttribute('data-popup');
+        popupContent.innerHTML = content;
+        popup.classList.add('show');
+        overlay.classList.add('show');
+      });
+    });
+
+    popupClose.addEventListener('click', () => {
+      popup.classList.remove('show');
+      overlay.classList.remove('show');
+    });
+
+    overlay.addEventListener('click', () => {
+      popup.classList.remove('show');
+      overlay.classList.remove('show');
+    });
+  </script>
+</body>
+</html>
